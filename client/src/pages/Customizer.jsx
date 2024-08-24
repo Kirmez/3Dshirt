@@ -41,10 +41,41 @@ const Customizer = () => {
         return <FilePicker file={file} setFile={setFile} readFile={readFile} />;
 
       case "aipicker":
-        return <AIPicker />;
+        return (
+          <AIPicker
+            prompt={prompt}
+            setPrompt={setPrompt}
+            generatingImg={generatingImg}
+            handleSubmit={handleSubmit}
+          />
+        );
 
       default:
         return null;
+    }
+  };
+
+  const handleSubmit = async (type) => {
+    if (!prompt) return alert("Please enter a promt");
+
+    try {
+      setGeneratingImg(true);
+
+      const response = await fetch("localhost:8080/api/v1/dalle", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          prompt, 
+        })
+      });
+    } catch (error) {
+      alert(error);
+    } finally {
+      setGeneratingImg(false);
+      setActiveEditorTab("");
     }
   };
 
@@ -61,7 +92,7 @@ const Customizer = () => {
   const handleActiveFilterTab = (tabName) => {
     switch (tabName) {
       case "logoShirt":
-        state.isFullTexture = !activeFilterTab[tabName];
+        state.isLogoTexture = !activeFilterTab[tabName];
         break;
       case "stylishShirt":
         state.isFullTexture = !activeFilterTab[tabName];
@@ -70,6 +101,15 @@ const Customizer = () => {
         state.isLogoTexture = true;
         state.isFullTexture = false;
     }
+
+    //after setting the state,
+
+    setActiveFilterTab((prevState) => {
+      return {
+        ...prevState,
+        [tabName]: !prevState[tabName],
+      };
+    });
   };
 
   const readFile = (type) => {
@@ -86,7 +126,8 @@ const Customizer = () => {
           <motion.div
             key="custom"
             className="absolute top-0 left-0 z-10"
-            {...slideAnimation("left")}>
+            {...slideAnimation("left")}
+          >
             <div className="flex items-center min-h-screen">
               <div className="editortabs-container tabs">
                 {EditorTabs.map((tab) => (
@@ -104,7 +145,8 @@ const Customizer = () => {
 
           <motion.div
             className="absolute z-10 top-5 right-5"
-            {...fadeAnimation}>
+            {...fadeAnimation}
+          >
             <CustomButton
               type="filled"
               title="Go Back"
@@ -115,14 +157,15 @@ const Customizer = () => {
 
           <motion.div
             className="filtertabs-container"
-            {...slideAnimation("up")}>
+            {...slideAnimation("up")}
+          >
             {FilterTabs.map((tab) => (
               <Tab
                 key={tab.name}
                 tab={tab}
                 isFilterTab
-                isActiveTab=""
-                handleClick={() => {}}
+                isActiveTab={activeFilterTab[tab.name]}
+                handleClick={() => handleActiveFilterTab(tab.name)}
               />
             ))}
           </motion.div>
